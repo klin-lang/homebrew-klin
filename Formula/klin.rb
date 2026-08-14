@@ -4,10 +4,10 @@
 # Homebrew tap formula for the Klin compiler.
 # Repo: https://github.com/klin-lang/homebrew-klin
 #
-#   brew tap dart-lang/dart
+# Stable = prebuilt GitHub Release (no Dart).
 #   brew install klin-lang/klin/klin
 #
-# HEAD:
+# HEAD = build from main (needs dart-lang/dart):
 #   brew install --HEAD klin-lang/klin/klin
 #
 # Keep in sync with https://github.com/klin-lang/klin Formula/klin.rb.
@@ -15,21 +15,43 @@ class Klin < Formula
   desc "Systems language that compiles to C"
   homepage "https://github.com/klin-lang/klin"
   license "MIT"
-  # Pin the version-bump commit: GitHub may serve a stale
-  # refs/tags/vX.Y.Z.tar.gz after a tag is moved.
-  url "https://github.com/klin-lang/klin/archive/5e3ef4bfba3a61369dad862e6682c831eed480d3.tar.gz"
-  sha256 "0f4310746e32b0acaacaa41c2d548ecf51adba4942ae5dad7a47a641ab4498e0"
   version "0.1.2"
 
-  head "https://github.com/klin-lang/klin.git", branch: "main"
+  on_macos do
+    on_arm do
+      url "https://github.com/klin-lang/klin/releases/download/v0.1.2/klin-macos-arm64.tar.gz"
+      sha256 "9441666b6958c4f36c97b399a6507c357ab719b42dc99fdf16510393d1e6bd75"
+    end
+    on_intel do
+      url "https://github.com/klin-lang/klin/releases/download/v0.1.2/klin-macos-amd64.tar.gz"
+      sha256 "b5f0235caecaa33d794f90bc0e8a3fd8231f03d6caa49f68b7be7901f26ffe19"
+    end
+  end
 
-  depends_on "dart-lang/dart/dart" => :build
+  on_linux do
+    on_arm do
+      url "https://github.com/klin-lang/klin/releases/download/v0.1.2/klin-linux-arm64.tar.gz"
+      sha256 "930730cf9f65b8783e3854605d03306da8c14e4d2ed7f5c57c7b1dba663c34c7"
+    end
+    on_intel do
+      url "https://github.com/klin-lang/klin/releases/download/v0.1.2/klin-linux-amd64.tar.gz"
+      sha256 "985e0ec067ee428f0ff2a81b79d441a829ae3f5db5b6867bdea128ba8cbfb6a4"
+    end
+  end
+
+  head do
+    url "https://github.com/klin-lang/klin.git", branch: "main"
+    depends_on "dart-lang/dart/dart" => :build
+  end
 
   def install
-    system "dart", "pub", "get"
-    system "dart", "compile", "exe", "bin/klin.dart", "-o", "klin"
+    if build.head?
+      system "dart", "pub", "get"
+      system "dart", "compile", "exe", "bin/klin.dart", "-o", "klin"
+    end
     bin.install "klin"
     (pkgshare/"stdlib").install Dir["stdlib/*"]
+    (pkgshare/"templates").install Dir["templates/*"]
   end
 
   def caveats
@@ -38,7 +60,9 @@ class Klin < Formula
 
       Stdlib is installed at:
         #{pkgshare}/stdlib
-      (`klin` discovers it next to the binary / under share/klin).
+      Board scaffolds (`klin init`) at:
+        #{pkgshare}/templates
+      (`klin` discovers them next to the binary / under share/klin).
     EOS
   end
 
